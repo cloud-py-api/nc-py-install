@@ -1,0 +1,97 @@
+name: Build and publish nc_py_install
+
+on:
+  workflow_dispatch:
+
+env:
+  TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
+  TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
+
+jobs:
+
+  wheels_any:
+    name: Build pure python wheels
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+      - name: Setup Python
+        uses: actions/setup-python@v3
+        with:
+          python-version: '3.9'
+
+      - name: Build pure wheel
+        run: |
+          python3 -m pip install twine wheel
+          python3 -m pip wheel -w wheelhouse/ .
+
+      - name: Check builded wheel
+        run: twine check wheelhouse/*
+
+      - name: Upload built wheels
+        uses: actions/upload-artifact@v3
+        with:
+          name: wheels
+          path: wheelhouse/*.whl
+          if-no-files-found: error
+
+  sdist:
+    name: Source distribution
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+      - name: Setup Python
+        uses: actions/setup-python@v3
+        with:
+          python-version: '3.9'
+
+      - name: Install requirements
+        run: |
+          python3 -m pip install --upgrade pip setuptools wheel
+          python3 -m pip install --user check-manifest twine
+
+      - name: Run check-manifest
+        run: python3 -m check_manifest
+
+      - name: Build sdist
+        run: python3 -m build --sdist --outdir wheelhouse
+
+      - name: Install and check sdist
+        run: |
+          python3 -m pip install --user wheelhouse/*.tar.gz
+          python3 -m twine check wheelhouse/*
+
+#      - name: Generate coverage report
+#        run: coverage run -m pytest && coverage xml
+
+#      - name: Upload report to Codecov
+#        uses: codecov/codecov-action@v2
+#        with:
+#          file: ./coverage.xml
+#          fail_ci_if_error: true
+#          verbose: true
+
+      - name: Upload sdist
+        uses: actions/upload-artifact@v3
+        with:
+          name: wheels
+          path: wheelhouse/*.tar.gz
+
+  publish:
+    name: Publish to Pypi
+    needs: [sdist, wheels_any]
+    runs-on: ubuntu-latest
+    steps:
+    - name: Collect sdist and wheels
+      uses: actions/download-artifact@v3
+      with:
+        name: wheels
+        path: wheelhouse
+
+    - name: Publish wheels to PyPI
+      run: |
+          python3 -m pip install twine
+          ls -la wheelhouse/
+          twine upload --skip-existing wheelhouse/*.whl
+          twine upload wheelhouse/*tar.gz
