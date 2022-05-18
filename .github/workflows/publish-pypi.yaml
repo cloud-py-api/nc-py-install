@@ -26,13 +26,13 @@ jobs:
           python3 -m pip wheel -w wheelhouse/ .
 
       - name: Check wheel
-        run: twine check wheelhouse/*
+        run: twine check wheelhouse/nc_py_install-*
 
       - name: Upload built wheels
         uses: actions/upload-artifact@v3
         with:
           name: wheels
-          path: wheelhouse/*.whl
+          path: wheelhouse/nc_py_install-*.whl
           if-no-files-found: error
 
   sdist:
