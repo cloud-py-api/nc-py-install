@@ -25,7 +25,7 @@ jobs:
           python3 -m pip install twine wheel
           python3 -m pip wheel -w wheelhouse/ .
 
-      - name: Check builded wheel
+      - name: Check wheel
         run: twine check wheelhouse/*
 
       - name: Upload built wheels
@@ -61,16 +61,6 @@ jobs:
         run: |
           python3 -m pip install --user wheelhouse/*.tar.gz
           python3 -m twine check wheelhouse/*
-
-#      - name: Generate coverage report
-#        run: coverage run -m pytest && coverage xml
-
-#      - name: Upload report to Codecov
-#        uses: codecov/codecov-action@v2
-#        with:
-#          file: ./coverage.xml
-#          fail_ci_if_error: true
-#          verbose: true
 
       - name: Upload sdist
         uses: actions/upload-artifact@v3

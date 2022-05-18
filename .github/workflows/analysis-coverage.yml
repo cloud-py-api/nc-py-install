@@ -22,20 +22,33 @@ jobs:
   build-analysis:
     runs-on: ubuntu-latest
     name: Analysis & Coverage
-    if: "!contains(github.event.head_commit.message, '[docs]')"
 
     steps:
       - uses: actions/checkout@v3
-      - name: Install from source
+      - name: Setup Python
+        uses: actions/setup-python@v3
+        with:
+          python-version: '3.10'
+
+      - name: Prepare python
         run: |
           python3 -m pip install --upgrade pip
-          python3 -m pip -v install ".[dev]"
+          python3 -m pip install ".[dev]"
+
+      - name: Prepare portable python
+        run: |
+          python3 .github/scripts/portable_python.py
+          cloud_py_api/python/bin/python3 -m pip install ".[dev]"
 
       - name: Pylint Analysis
         run: pylint nc_py_install
 
       - name: Generate coverage report
-        run: coverage run -m pytest && coverage xml && coverage html
+        run: |
+          python3 -m coverage run -m pytest
+          cloud_py_api/python/bin/python3 -m coverage run -m pytest
+          coverage combine
+          coverage xml && coverage html
 
       - name: HTML coverage to artifacts
         uses: actions/upload-artifact@v3
@@ -44,9 +57,9 @@ jobs:
           path: ./htmlcov
           if-no-files-found: error
 
-      - name: Upload report to Codecov
-        uses: codecov/codecov-action@v2
-        with:
-          file: ./coverage.xml
-          fail_ci_if_error: true
-          verbose: true
+#      - name: Upload report to Codecov
+#        uses: codecov/codecov-action@v2
+#        with:
+#          file: ./coverage.xml
+#          fail_ci_if_error: true
+#          verbose: true
