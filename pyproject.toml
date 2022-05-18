@@ -30,7 +30,7 @@ master.unsafe-load-any-extension = "yes"
 design.max-attributes = 8
 basic.good-names = [
     "a", "b", "c", "d", "e", "f", "i", "j", "k", "r", "v",
-    "ex", "_", "fp", "im",
+    "ex", "_", "fp", "fd", "im",
 ]
 reports.output-format = "colorized"
 similarities.ignore-imports = "yes"

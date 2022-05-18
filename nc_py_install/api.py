@@ -347,8 +347,8 @@ def requirements_check(requirements_file: Union[Path, str], userbase: str = "") 
         warn("requirements data cannot be read without `requirements-parser` dependency")
         return [], []
     dependencies = []
-    with open(requirements_file, 'r') as fd:
-        for req in requirements.parse(fd):
+    with open(requirements_file, 'r', encoding="utf-8") as f:
+        for req in requirements.parse(f):
             dependencies.append(req.name)
     installed_list = []
     not_installed_list = []
@@ -424,7 +424,7 @@ def requirements_delete(requirements_file: Union[Path, str], userbase: str = "")
         warn("requirements data cannot be read without `requirements-parser` dependency")
         return
     dependencies = []
-    with open(requirements_file, 'r') as fd:
-        for req in requirements.parse(fd):
+    with open(requirements_file, 'r', encoding="utf-8") as f:
+        for req in requirements.parse(f):
             dependencies.append(req.name)
     pckg_delete(dependencies, userbase=userbase)
