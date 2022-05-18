@@ -57,9 +57,9 @@ jobs:
           path: ./htmlcov
           if-no-files-found: error
 
-#      - name: Upload report to Codecov
-#        uses: codecov/codecov-action@v2
-#        with:
-#          file: ./coverage.xml
-#          fail_ci_if_error: true
-#          verbose: true
+      - name: Upload report to Codecov
+        uses: codecov/codecov-action@v2
+        with:
+          file: ./coverage.xml
+          fail_ci_if_error: true
+          verbose: true

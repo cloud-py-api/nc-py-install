@@ -1,15 +1,15 @@
 """File contains implementations of wrapper functions for Python and Pip API."""
 
-import sys
 import logging
-from pathlib import Path
-from typing import Union
+import sys
+from dataclasses import dataclass
 from importlib import invalidate_caches
-from importlib.metadata import PackageNotFoundError, version, requires, files
+from importlib.metadata import PackageNotFoundError, files, requires, version
 from os import environ, makedirs, path, remove
+from pathlib import Path
 from re import IGNORECASE, MULTILINE, search, sub
 from subprocess import DEVNULL, CalledProcessError, TimeoutExpired, run
-from dataclasses import dataclass
+from typing import Dict, List, Tuple, Union
 from warnings import warn
 
 try:
@@ -52,7 +52,6 @@ class Options:
         return sys.executable.startswith(self.app_data)
 
 
-EXTRA_PIP_ARGS = []
 OPTIONS = Options()
 Log = logging.getLogger("pyfrm.install")
 
@@ -107,9 +106,9 @@ def get_site_packages(userbase: str = "") -> str:
 
 def check_pip() -> tuple:
     _ret = (0, 0, 0)
-    pip_version = get_package_version("pip")
-    if pip_version:
-        m_groups = search(r"(\d+(\.\d+){0,2})", pip_version, flags=MULTILINE + IGNORECASE)
+    pckg_version = get_package_version("pip")
+    if pckg_version:
+        m_groups = search(r"(\d+(\.\d+){0,2})", pckg_version, flags=MULTILINE + IGNORECASE)
         if m_groups:
             pip_version = tuple(map(int, str(m_groups.groups()[0]).split(".")))
             return pip_version if len(pip_version) > 2 else pip_version + (0,)
@@ -120,11 +119,10 @@ def remove_pip_warnings(pip_output: str) -> str:
     return sub(r"^\s*WARNING:.*\n?", "", pip_output, flags=MULTILINE + IGNORECASE)
 
 
-def pip_call(params, userbase: str = "", python_path: str = "", user=False, cache=None) -> [bool, str]:
+def pip_call(params, userbase: str = "", python_path: str = "", user=False, cache=None) -> Tuple[bool, str]:
     Log.debug("pip_call(USERBASE<%s> PATH<%s>)", userbase, python_path)
     try:
         etc = ["--disable-pip-version-check"]
-        etc += EXTRA_PIP_ARGS
         _env = get_modified_env(userbase=userbase, python_path=python_path)
         if user:
             etc += ["--user"]
@@ -270,12 +268,14 @@ def get_package_version(name: str) -> Union[str, None]:
         return None
 
 
-def get_package_dependencies(name: str) -> Union[dict, None]:
+def get_package_dependencies(name: str) -> Union[Dict[str, List[str]], None]:
     name = remove_extra_from_pckg_name(name)
     try:
         dependencies = requires(name)
     except PackageNotFoundError:
         return None
+    if dependencies is None:
+        dependencies = []
     requires_list = []
     optional_list = []
     for i in dependencies:
@@ -314,7 +314,7 @@ def get_userbase_for_app(app_name: str) -> str:
     return OPTIONS.core_userbase
 
 
-def pckg_check(pckg_name: str, userbase: str = "") -> [list, list, list]:
+def pckg_check(pckg_name: str, userbase: str = "") -> Tuple[list, list, list]:
     added_path = add_python_path(get_site_packages(userbase=userbase), first=True)
     installed_list = []
     not_installed_list = [{"package": pckg_name, "location": "", "version": ""}]
@@ -342,12 +342,12 @@ def pckg_check(pckg_name: str, userbase: str = "") -> [list, list, list]:
     return installed_list, not_installed_list, not_installed_opt_list
 
 
-def requirements_check(requirements_file: Union[Path, str], userbase: str = "") -> [list, list]:
+def requirements_check(requirements_file: Union[Path, str], userbase: str = "") -> Tuple[list, list]:
     if requirements is None:
         warn("requirements data cannot be read without `requirements-parser` dependency")
         return [], []
     dependencies = []
-    with open(requirements_file, 'r', encoding="utf-8") as f:
+    with open(requirements_file, "r", encoding="utf-8") as f:
         for req in requirements.parse(f):
             dependencies.append(req.name)
     installed_list = []
@@ -393,7 +393,7 @@ def pckg_install(pckg_name: str, userbase: str = "", extra_args=None) -> bool:
         added_path = add_python_path(get_site_packages(userbase=userbase), first=True)
         dependencies = get_package_dependencies(clear_name)
         remove_python_path(added_path)
-        if dependencies["optional"]:
+        if dependencies and dependencies["optional"]:
             _result, _message = pip_call(
                 ["install", pckg_name + "[optional]", "--no-warn-script-location"] + extra_args,
                 userbase=userbase,
@@ -424,7 +424,7 @@ def requirements_delete(requirements_file: Union[Path, str], userbase: str = "")
         warn("requirements data cannot be read without `requirements-parser` dependency")
         return
     dependencies = []
-    with open(requirements_file, 'r', encoding="utf-8") as f:
+    with open(requirements_file, "r", encoding="utf-8") as f:
         for req in requirements.parse(f):
             dependencies.append(req.name)
     pckg_delete(dependencies, userbase=userbase)

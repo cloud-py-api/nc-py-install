@@ -1,8 +1,8 @@
 from os import path, remove
 
 import pytest
-import nc_py_install
 
+import nc_py_install
 
 APP_DATA_DIR = path.abspath("./cloud_py_api")
 nc_py_install.OPTIONS.app_data = APP_DATA_DIR

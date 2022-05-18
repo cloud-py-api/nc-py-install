@@ -26,13 +26,13 @@ jobs:
           python3 -m pip wheel -w wheelhouse/ .
 
       - name: Check wheel
-        run: twine check wheelhouse/*
+        run: twine check wheelhouse/nc_py_install-*
 
       - name: Upload built wheels
         uses: actions/upload-artifact@v3
         with:
           name: wheels
-          path: wheelhouse/*.whl
+          path: wheelhouse/nc_py_install-*.whl
           if-no-files-found: error
 
   sdist:
@@ -68,10 +68,52 @@ jobs:
           name: wheels
           path: wheelhouse/*.tar.gz
 
+  create_release:
+    needs: [sdist, wheels_any]
+    runs-on: ubuntu-20.04
+    name: Create GitHub release
+
+    steps:
+      - uses: actions/checkout@v3
+      - name: Get release info
+        id: get_release_info
+        run: |
+          RELEASE_VERSION=$(sed -n "s/^__version__.*\"\(.*\)\"$/\\1/p" ./nc_py_install/_version.py)
+          echo "::set-output name=version::v${RELEASE_VERSION}"
+          echo "::set-output name=tag::v${RELEASE_VERSION}"
+          CHANGELOG=$(grep -oPz "(?s)##\s\[$RELEASE_VERSION.+?(?=##\s\[|$)" ./CHANGELOG.md | tr -d '\0' | sed /^$/d | sed '1d')
+          CHANGELOG=$(echo "$CHANGELOG" | sed '$!N;s/^###.*\n#/#/;P;D' | sed '$!N;s/^###.*\n#/#/;P;D' | sed '${/^###/d;}')
+          if [ "$CHANGELOG" == "" ]; then
+            echo "changelog is empty!"
+            exit 1
+          fi
+          echo "CHANGELOG<<EOF" >> $GITHUB_ENV
+          echo "$CHANGELOG" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
+
+      - name: Collect sdist and wheels
+        uses: actions/download-artifact@v3
+        with:
+          name: wheels
+          path: wheelhouse
+
+      - name: Create release draft
+        uses: ncipollo/release-action@v1.10.0
+        with:
+          name: ${{ steps.get_release_info.outputs.version }}
+          tag: ${{ steps.get_release_info.outputs.tag }}
+          commit: ${{ github.ref }}
+          draft: false
+          body: ${{ env.CHANGELOG }}
+          artifacts: wheelhouse/*
+          token: ${{ secrets.GITHUB_TOKEN }}
+          artifactErrorsFailBuild: true
+
   publish:
     name: Publish to Pypi
-    needs: [sdist, wheels_any]
+    needs: [create_release]
     runs-on: ubuntu-latest
+
     steps:
     - name: Collect sdist and wheels
       uses: actions/download-artifact@v3
