@@ -3,14 +3,21 @@
 import logging
 import platform
 import sys
-from typing import List, Optional
 from argparse import ArgumentParser
 from getpass import getuser
 from json import dumps as to_json
+from typing import List, Optional
 from urllib.parse import unquote_plus
 
-from .api import OPTIONS, update_pip_info, update_pip, get_userbase_for_app, pckg_check, pckg_install, pckg_delete
-
+from .api import (
+    OPTIONS,
+    get_userbase_for_app,
+    pckg_check,
+    pckg_delete,
+    pckg_install,
+    update_pip,
+    update_pip_info,
+)
 
 LOGS_CONTAINER = []
 Log = logging.getLogger("pyfrm.install")
@@ -100,33 +107,33 @@ def main(args: Optional[List[str]] = None):
         action="store_true",
         help="Perform delete of specified target's package(s).",
     )
-    args = parser.parse_args(args)
-    OPTIONS.dev = args.dev
-    args.target = str(args.target).lower()
-    OPTIONS.app_data = unquote_plus(args.appdata)
-    Log.setLevel(level=args.loglvl)
+    _args = parser.parse_args(args)
+    OPTIONS.dev = _args.dev
+    _args.target = str(_args.target).lower()
+    OPTIONS.app_data = unquote_plus(_args.appdata)
+    Log.setLevel(level=_args.loglvl)
     Log.addHandler(InstallLogHandler())
     exit_code = 0
-    result = False
-    r_ok = []
-    r_not_ok = []
-    r_not_ok_opt = []
+    r = False
+    r_ok: List[dict] = []
+    r_not_ok: List[dict] = []
+    r_not_ok_opt: List[dict] = []
     try:
-        print_debug_info(args.target)
+        print_debug_info(_args.target)
         update_pip_info()
         Log.info("Python: %s : %s", sys.executable, sys.version)
         Log.info("Pip version: %s, local: %r", OPTIONS.pip_version, OPTIONS.pip_local)
-        if args.install:
-            result = pckg_install(args.target, get_userbase_for_app(args.appname))
-        elif args.update:
+        if _args.install:
+            r = pckg_install(_args.target, get_userbase_for_app(_args.appname))
+        elif _args.update:
             if update_pip():
-                result = pckg_install(args.target, get_userbase_for_app(args.appname), ["--upgrade"])
-        elif args.delete:
-            result = pckg_delete(args.target, get_userbase_for_app(args.appname))
-        r_ok, r_not_ok, r_not_ok_opt = pckg_check(args.target, get_userbase_for_app(args.appname))
-        if args.check and not r_not_ok:
-            result = True
-        if not result:
+                r = pckg_install(_args.target, get_userbase_for_app(_args.appname), ["--upgrade"])
+        elif _args.delete:
+            r = pckg_delete(_args.target, get_userbase_for_app(_args.appname))
+        r_ok, r_not_ok, r_not_ok_opt = pckg_check(_args.target, get_userbase_for_app(_args.appname))
+        if _args.check and not r_not_ok:
+            r = True
+        if not r:
             exit_code = 1
     except Exception as exception_info:  # pylint: disable=broad-except
         Log.exception("Exception: %s", type(exception_info).__name__)
@@ -136,7 +143,7 @@ def main(args: Optional[List[str]] = None):
         "Installed": r_ok,
         "NotInstalled": r_not_ok,
         "NotInstalledOpt": r_not_ok_opt,
-        "Result": result,
+        "Result": r,
     }
     if OPTIONS.dev:
         result.pop("Logs")

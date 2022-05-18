@@ -1,9 +1,9 @@
-from urllib import parse
 from os import path
+from urllib import parse
 
 import pytest
-import nc_py_install
 
+import nc_py_install
 
 APP_DATA_DIR = path.abspath("./cloud_py_api")
 MAIN_ARGS = ["--appdata", parse.quote_plus(APP_DATA_DIR), "--target"]
@@ -16,8 +16,8 @@ MAIN_ARGS = ["--appdata", parse.quote_plus(APP_DATA_DIR), "--target"]
         ("pymysql", ""),
         ("pillow-heif", "0.2.2"),
         ("pillow-heif", ""),
-        ("SQLAlchemy", "")
-    )
+        ("SQLAlchemy", ""),
+    ),
 )
 def test_subpackages(package_name, version):
     # Check must fail here and return exitcode = 1

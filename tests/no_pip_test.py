@@ -1,9 +1,10 @@
-import sys
-from urllib import parse
-from os import path
 import subprocess
+import sys
+from os import path
+from urllib import parse
 
 import pytest
+
 import nc_py_install
 
 APP_DATA_DIR = path.abspath("./cloud_py_api")
@@ -15,9 +16,7 @@ if not sys.executable.startswith(APP_DATA_DIR):
 
 @pytest.fixture(scope="module")
 def delete_pip():
-    subprocess.run(
-        [sys.executable, "-m", "pip", "uninstall", "pip", "-y"], capture_output=False, check=True
-    )
+    subprocess.run([sys.executable, "-m", "pip", "uninstall", "pip", "-y"], capture_output=False, check=True)
     yield
 
 
@@ -28,8 +27,8 @@ def delete_pip():
         ("pymysql", ""),
         ("pillow-heif", "0.2.2"),
         ("pillow-heif", ""),
-        ("SQLAlchemy", "")
-    )
+        ("SQLAlchemy", ""),
+    ),
 )
 def test_subpackages(package_name, version, delete_pip):
     # Check must fail here and return exitcode = 1
