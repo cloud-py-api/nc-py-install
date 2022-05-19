@@ -145,6 +145,7 @@ cython_debug/
 
 .DS_Store
 
+.run
 /out
 /dev/
 /cloud_py_api
