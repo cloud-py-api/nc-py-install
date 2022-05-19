@@ -9,7 +9,7 @@
 ![pypi](https://img.shields.io/pypi/v/nc-py-install.svg)
 
 
-Package with helper scripts/functions for [nc-py-frm](https://github.com/cloud-py-api/nc-py-frm) and for [cloud-py-api](https://github.com/cloud-py-api/cloud-py-api)
+Package with helper scripts/functions for [cloud-py-api](https://github.com/cloud-py-api/cloud-py-api) and [nc-py-frm](https://github.com/cloud-py-api/nc-py-frm)
 
 Provides API for installation of python modules and packages.
 
