@@ -342,32 +342,6 @@ def pckg_check(pckg_name: str, userbase: str = "") -> Tuple[list, list, list]:
     return installed_list, not_installed_list, not_installed_opt_list
 
 
-def requirements_check(requirements_file: Union[Path, str], userbase: str = "") -> Tuple[list, list]:
-    if requirements is None:
-        warn("requirements data cannot be read without `requirements-parser` dependency")
-        return [], []
-    dependencies = []
-    with open(requirements_file, "r", encoding="utf-8") as f:
-        for req in requirements.parse(f):
-            dependencies.append(req.name)
-    installed_list = []
-    not_installed_list = []
-    added_path = add_python_path(get_site_packages(userbase=userbase), first=True)
-    for dependency in dependencies:
-        dependency_version = get_package_version(dependency)
-        dependency_info = {
-            "package": dependency,
-            "version": dependency_version if dependency_version else "",
-            "location": get_package_location(dependency),
-        }
-        if dependency_info["version"]:
-            installed_list.append(dependency_info)
-        else:
-            not_installed_list.append(dependency_info)
-    remove_python_path(added_path)
-    return installed_list, not_installed_list
-
-
 def pckg_install(pckg_name: str, userbase: str = "", extra_args=None) -> bool:
     if extra_args is None:
         extra_args = []
@@ -417,6 +391,32 @@ def pckg_delete(pckg_name: Union[str, list], userbase: str = "") -> bool:
         Log.warning("Cant uninstall packages for %s. Pip output:\n%s", pckg_name, _message)
         return False
     return True
+
+
+def requirements_check(requirements_file: Union[Path, str], userbase: str = "") -> Tuple[list, list]:
+    if requirements is None:
+        warn("requirements data cannot be read without `requirements-parser` dependency")
+        return [], []
+    dependencies = []
+    with open(requirements_file, "r", encoding="utf-8") as f:
+        for req in requirements.parse(f):
+            dependencies.append(req.name)
+    installed_list = []
+    not_installed_list = []
+    added_path = add_python_path(get_site_packages(userbase=userbase), first=True)
+    for dependency in dependencies:
+        dependency_version = get_package_version(dependency)
+        dependency_info = {
+            "package": dependency,
+            "version": dependency_version if dependency_version else "",
+            "location": get_package_location(dependency),
+        }
+        if dependency_info["version"]:
+            installed_list.append(dependency_info)
+        else:
+            not_installed_list.append(dependency_info)
+    remove_python_path(added_path)
+    return installed_list, not_installed_list
 
 
 def requirements_delete(requirements_file: Union[Path, str], userbase: str = "") -> None:
