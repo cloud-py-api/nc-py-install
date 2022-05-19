@@ -69,7 +69,6 @@ jobs:
           path: wheelhouse/*.tar.gz
 
   create_release:
-    permissions: read-all|write-all
     needs: [sdist, wheels_any]
     runs-on: ubuntu-20.04
     name: Create GitHub release
