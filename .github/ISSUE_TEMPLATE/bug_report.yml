@@ -1,0 +1,42 @@
+name: Bug Report
+description: Create a report to help reproduce and correct the bug
+labels: ['Bug', 'Needs Triage']
+
+body:
+- type: markdown
+  attributes:
+    value: >
+      #### Before submitting a bug, please make sure the issue hasn't been already
+      addressed by searching through [the past issues](https://github.com/cloud-py-api/nc-py-install/issues)
+- type: textarea
+  attributes:
+    label: Describe the bug
+    description: >
+      A clear and concise description of what the bug is.
+  validations:
+    required: true
+- type: textarea
+  attributes:
+    label: Steps to Reproduce
+    description: |
+      Please add a minimal description how we can reproduce the error when running it. Be as succinct as possible.
+
+      If the text is too long, feel free to put it in a public gist and link it in the issue: https://gist.github.com.
+
+    placeholder: |
+      ```
+      Steps to reproduce the problem
+      ```
+  validations:
+    required: true
+- type: textarea
+  attributes:
+    label: Versions
+    description: |
+      Please post your system specification here. You can use "Collect system info" button in Settings->Cloud_Py_Api app.
+  validations:
+    required: true
+- type: markdown
+  attributes:
+    value: >
+      Thanks for contributing 🎉!
