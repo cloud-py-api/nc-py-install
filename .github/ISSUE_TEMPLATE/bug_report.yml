@@ -33,7 +33,7 @@ body:
   attributes:
     label: Versions
     description: |
-      Please post your system specification here. You can use "Collect system info" button in Settings->Cloud_Py_Api app.
+      Please post your system specification here. You can use "Collect system info" button in Settings->CloudPyApi app.
   validations:
     required: true
 - type: markdown

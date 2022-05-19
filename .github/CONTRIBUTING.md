@@ -4,13 +4,14 @@ Bug fixes, feature additions, tests, documentation and more can be contributed v
 
 ## Bug fixes, feature additions, etc.
 
-Please send a pull request to the `main` branch.  Feel free to ask questions at [discussions](https://github.com/cloud-py-api/cloud_py_api/discussions)
+Please send a pull request to the `main` branch.  Feel free to ask questions at [discussions](https://github.com/cloud-py-api/cloud-py-api/discussions)
 
 - Fork the nc-py-install repository.
 - Create a branch from `main`.
 - Install dev requirements with `pip install ".[dev]"`
 - Develop bug fixes, features, tests, etc.
-- Run the test suite. How to run coverage tests, you can see at [coverage workflow](https://github.com/cloud-py-api/nc-py-install/blob/master/.github/workflows/analysis-coverage.yml)
+- Run the test suite if needed. Tests must be run on system and portable interpreter, so do that with caution.
+- How to run coverage tests, you can see at [coverage workflow](https://github.com/cloud-py-api/nc-py-install/blob/master/.github/workflows/analysis-coverage.yml)
 - Run PyLint inside project root: `pylint nc_py_install`
 - Do not forget to install `pre-commit` hooks by `pre-commit install` command.
 - Create a pull request to pull the changes from your branch to the nc-py-install `main`.
