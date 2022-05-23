@@ -1,38 +1,59 @@
 import subprocess
 import sys
 from os import path
+from unittest.mock import patch
 from urllib import parse
 
 import pytest
 
+import nc_py_install
+
 APP_DATA_DIR = path.abspath("./cloud_py_api")
-ARGUMENTS = [sys.executable, "-m", "nc_py_install", "--appdata", parse.quote_plus(APP_DATA_DIR), "--target"]
+MAIN_ARGS = ["--appdata", parse.quote_plus(APP_DATA_DIR)]
 
 
-@pytest.mark.parametrize(
-    "package_name, version",
-    (
-        ("pg8000", "1.26.0"),
-        ("pymysql", ""),
-        ("pillow-heif", "0.2.2"),
-        ("pillow-heif", ""),
-        ("SQLAlchemy", ""),
-    ),
-)
-def test_subpackages(package_name, version):
+@pytest.fixture(scope="function")
+def remove_frm():
+    # remove it if it was previously installed by call to internal api.
+    nc_py_install.pckg_delete("nc_py_frm")
+    yield
+    nc_py_install.pckg_delete("nc_py_frm")
+
+
+def test_main(remove_frm):
     # Check must fail here and return exitcode = 1
-    r = subprocess.run(ARGUMENTS + [package_name] + ["--check"], capture_output=False)
-    assert r.returncode == 1
-    install_string = package_name + "==" + version if version else package_name
+    assert nc_py_install.main(MAIN_ARGS + ["--check"]) == 1
     # Install must succeed
-    r = subprocess.run(ARGUMENTS + [install_string] + ["--install"], capture_output=False)
-    assert r.returncode == 0
-    if version:
-        r = subprocess.run(ARGUMENTS + [package_name] + ["--update"], capture_output=False)
-        assert r.returncode == 0
-    # Clean up, by deleting package.
-    r = subprocess.run(ARGUMENTS + [install_string] + ["--delete"], capture_output=False)
-    assert r.returncode == 0
-    # Call here `check` again to see that `delete` was successful.
-    r = subprocess.run(ARGUMENTS + [package_name] + ["--check"], capture_output=False)
+    assert nc_py_install.main(MAIN_ARGS + ["--install"]) == 0
+    # Call here `check` again to see that `install` was successful.
+    assert nc_py_install.main(MAIN_ARGS + ["--check"]) == 0
+    # Update must succeed
+    assert nc_py_install.main(MAIN_ARGS + ["--update"]) == 0
+
+
+def test_dev_logs(remove_frm):
+    assert nc_py_install.main(MAIN_ARGS + ["--check", "--dev"]) == 1
+    assert nc_py_install.main(MAIN_ARGS + ["--install", "--dev"]) == 0
+    assert nc_py_install.main(MAIN_ARGS + ["--check", "--dev"]) == 0
+
+
+@patch("nc_py_install.cli.getuser", side_effect=OSError("can handle"))
+def test_exception_handled_get_user(_mock_class, remove_frm):
+    assert nc_py_install.main(MAIN_ARGS + ["--install"]) == 0
+
+
+@patch("nc_py_install.cli.getuser", side_effect=Exception("can not handle"))
+def test_exception_not_handled_get_user(_mock_class, remove_frm):
+    assert nc_py_install.main(MAIN_ARGS + ["--install"]) == 2
+
+
+def test_subprocess(remove_frm):
+    args = [sys.executable, "-m", "nc_py_install", "--appdata", parse.quote_plus(APP_DATA_DIR)]
+    r = subprocess.run(args + ["--check"], capture_output=False)
     assert r.returncode == 1
+    r = subprocess.run(args + ["--install"], capture_output=False)
+    assert r.returncode == 0
+    r = subprocess.run(args + ["--check"], capture_output=False)
+    assert r.returncode == 0
+    r = subprocess.run(args + ["--update"], capture_output=False)
+    assert r.returncode == 0
