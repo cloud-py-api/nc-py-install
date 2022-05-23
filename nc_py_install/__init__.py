@@ -16,7 +16,6 @@ from .api import (
     pckg_install,
     remove_python_path,
     requirements_check,
-    requirements_delete,
     update_pip_info,
 )
 from .cli import main

@@ -148,4 +148,4 @@ cython_debug/
 .run
 /out
 /dev/
-/cloud_py_api
+cloud_py_api

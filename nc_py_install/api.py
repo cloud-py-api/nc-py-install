@@ -342,57 +342,6 @@ def pckg_check(pckg_name: str, userbase: str = "") -> Tuple[list, list, list]:
     return installed_list, not_installed_list, not_installed_opt_list
 
 
-def pckg_install(pckg_name: str, userbase: str = "", extra_args=None) -> bool:
-    if extra_args is None:
-        extra_args = []
-    if not OPTIONS.pip_present:
-        if not install_pip():
-            Log.error("Cant install local pip.")
-            return False
-        update_pip_info()
-        if not OPTIONS.pip_present:
-            Log.error("Cant run pip after local install.")
-            return False
-    from_file = pckg_name.startswith("-r ")
-    if from_file:
-        pip_args = ["install"] + pckg_name.split(sep=" ") + ["--no-warn-script-location"] + extra_args
-    else:
-        pip_args = ["install", pckg_name, "--no-warn-script-location"] + extra_args
-    _result, _message = pip_call(pip_args, userbase=userbase, user=True, cache=True)
-    if not _result:
-        Log.error("Cant install %s. Pip output:\n%s", pckg_name, _message)
-        return False
-    if not from_file:
-        clear_name = pckg_name.split("==")[0]
-        added_path = add_python_path(get_site_packages(userbase=userbase), first=True)
-        dependencies = get_package_dependencies(clear_name)
-        remove_python_path(added_path)
-        if dependencies and dependencies["optional"]:
-            _result, _message = pip_call(
-                ["install", pckg_name + "[optional]", "--no-warn-script-location"] + extra_args,
-                userbase=userbase,
-                user=True,
-                cache=True,
-            )
-            if not _result:
-                Log.warning("Cant install optional packages for %s. \n%s", clear_name, _message)
-    return True
-
-
-def pckg_delete(pckg_name: Union[str, list], userbase: str = "") -> bool:
-    if isinstance(pckg_name, str):
-        pckg_name = [pckg_name]
-    _result, _message = pip_call(
-        ["uninstall", "-y"] + pckg_name,
-        userbase=userbase,
-        cache=True,
-    )
-    if not _result:
-        Log.warning("Cant uninstall packages for %s. Pip output:\n%s", pckg_name, _message)
-        return False
-    return True
-
-
 def requirements_check(requirements_file: Union[Path, str], userbase: str = "") -> Tuple[list, list]:
     if requirements is None:
         warn("requirements data cannot be read without `requirements-parser` dependency")
@@ -419,12 +368,52 @@ def requirements_check(requirements_file: Union[Path, str], userbase: str = "") 
     return installed_list, not_installed_list
 
 
-def requirements_delete(requirements_file: Union[Path, str], userbase: str = "") -> None:
-    if requirements is None:
-        warn("requirements data cannot be read without `requirements-parser` dependency")
-        return
-    dependencies = []
-    with open(requirements_file, "r", encoding="utf-8") as f:
-        for req in requirements.parse(f):
-            dependencies.append(req.name)
-    pckg_delete(dependencies, userbase=userbase)
+def pckg_install(pckg_name: str, userbase: str = "", extra_args=None) -> bool:
+    """Install(or upgrade) package or list of packages using specified userbase."""
+
+    if extra_args is None:
+        extra_args = []
+    if not OPTIONS.pip_present:
+        if not install_pip():
+            Log.error("Cant install local pip.")
+            return False
+        update_pip_info()
+        if not OPTIONS.pip_present:
+            Log.error("Cant run pip after local install.")
+            return False
+    pip_args = ["install"] + pckg_name.split(sep=" ") + ["--no-warn-script-location"] + extra_args
+    _result, _message = pip_call(pip_args, userbase=userbase, user=True, cache=True)
+    if not _result:
+        Log.error("Cant install %s. Pip output:\n%s", pckg_name, _message)
+        return False
+    if not pckg_name.startswith("-r "):
+        clear_name = pckg_name.split("==")[0]
+        added_path = add_python_path(get_site_packages(userbase=userbase), first=True)
+        dependencies = get_package_dependencies(clear_name)
+        remove_python_path(added_path)
+        if dependencies and dependencies["optional"]:
+            _result, _message = pip_call(
+                ["install", pckg_name + "[optional]", "--no-warn-script-location"] + extra_args,
+                userbase=userbase,
+                user=True,
+                cache=True,
+            )
+            if not _result:
+                Log.warning("Cant install optional packages for %s. \n%s", clear_name, _message)
+    return True
+
+
+def pckg_delete(pckg_name: Union[str, list], userbase: str = "") -> bool:
+    """Delete package or list of packages using specified userbase."""
+
+    if isinstance(pckg_name, str):
+        pckg_name = [pckg_name]
+    _result, _message = pip_call(
+        ["uninstall", "-y"] + pckg_name,
+        userbase=userbase,
+        cache=True,
+    )
+    if not _result:
+        Log.warning("Cant uninstall packages. Pip output:\n%s", _message)
+        return False
+    return True
